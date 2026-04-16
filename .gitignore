@@ -1,0 +1,64 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# --- Entornos Virtuales ---
+venv/
+.venv/
+env/
+.env
+bin/
+include/
+share/
+
+# --- Modelos y Datos (Pesados) ---
+# Ignoramos modelos de Keras y pesos pesados [cite: 228]
+*.keras
+*.h5
+*.model
+*.weights
+*.pkl
+api/models/*
+
+# Ignoramos datasets y base de datos vectorial [cite: 232]
+data/raw/*
+data/processed/*
+data/vector_db/*
+
+# --- MLOps ---
+# MLflow y DVC
+.mlflow/
+mlruns/
+.dvc/cache/
+
+# --- Notebooks ---
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# --- IDEs y Sistema ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Docker ---
+.docker/
+*.log

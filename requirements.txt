@@ -1,0 +1,27 @@
+# --- Core Frameworks ---
+tensorflow>=2.15.0
+keras>=3.0.0
+fastapi>=0.109.0
+uvicorn>=0.27.0
+streamlit>=1.31.0
+
+# --- NLP & RAG ---
+transformers>=4.37.0
+peft>=0.8.0
+bitsandbytes>=0.42.0
+chromadb>=0.4.22
+sentence-transformers>=2.3.0
+
+# --- Data Science & ML ---
+pandas>=2.2.0
+numpy>=1.26.0
+scikit-learn>=1.4.0
+matplotlib>=3.8.0
+plotly>=5.18.0
+
+# --- MLOps & Utilities ---
+mlflow>=2.10.0
+dvc>=3.43.0
+python-multipart>=0.0.9
+requests>=2.31.0
+python-dotenv>=1.0.1
