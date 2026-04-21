@@ -23,7 +23,7 @@ if submitted:
         with st.spinner("Analizando información clínica..."):
             try:
                 # Llamada al endpoint de FastAPI que creamos antes
-                # Esta url cambiará cuando implementemos Docker
+                # mod - Esta url cambiará cuando implementemos Docker
                 API_URL = "http://127.0.0.1:8000/predict"
                 payload = {"symptoms": symptoms}
                 

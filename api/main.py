@@ -25,10 +25,10 @@ async def predict_triage(request: SymptomRequest):
     Endpoint principal para recibir síntomas y devolver un triaje. [cite: 236]
     En esta fase de MVP, devolvemos una respuesta simulada (Mock).
     """
-    # Aquí es donde integraremos el modelo .keras que generará Jesús [cite: 237]
+    # mod - Aquí va el modelo .keras de Jesús
     user_input = request.symptoms.lower()
     
-    # Lógica de respuesta temporal (Mock) para validar la conexión con el frontend
+    # mod - Lógica de respuesta temporal (Mock) para validar la conexión con el frontend
     return {
         "especialidad_sugerida": "Medicina General (MVP)",
         "nivel_urgencia": "Pendiente de evaluación técnica",
