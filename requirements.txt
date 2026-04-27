@@ -11,6 +11,11 @@ peft>=0.8.0
 bitsandbytes>=0.42.0
 chromadb>=0.4.22
 sentence-transformers>=2.3.0
+langchain>=0.1.0
+langchain-community>=0.0.10
+langchain-huggingface>=0.0.3
+pypdf>=4.0.0
+
 
 # --- Data Science & ML ---
 pandas>=2.2.0
