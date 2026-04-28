@@ -63,6 +63,12 @@ async def predict_triage(request: SymptomRequest):
         "mensaje": f"Recibido análisis de: '{user_input}'",
         "contexto_recuperado": contexto_medico,
         "instrucciones": "Consulte con un profesional sanitario si los síntomas persisten.",
+        # mod Simulación de los porcentajes de confianza del modelo a falta de la implementación de jesús
+        "confianza_modelo": {
+            "Medicina General": 0.75,
+            "Cardiología": 0.15,
+            "Ansiedad": 0.10
+        }
     }
 
 

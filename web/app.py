@@ -23,9 +23,20 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+        # Si hay gráficos en el historial, los pintamos
+        if message.get("confianza"):
+            st.caption("**Confianza de la predicción:**")
+            for esp, prob in message["confianza"].items():
+                col1, col2 = st.columns([1, 3])
+                with col1:
+                    st.write(f"*{esp}*")
+                with col2:
+                    st.progress(prob, text=f"{int(prob * 100)}%")
+            st.write("---")
+
         # Si el mensaje del asistente tiene contexto RAG, lo mostramos en un desplegable
         if message.get("rag_context"):
-            with st.expander("📚 Ver fuentes clínicas (Sistema RAG)"):
+            with st.expander("Ver fuentes clínicas (Sistema RAG)"):
                 st.info(message["rag_context"])
 
 # --- Entrada de Usuario ---
@@ -51,15 +62,31 @@ if prompt := st.chat_input(
 
                     # 1. Preparamos el texto principal (Limpio y directo)
                     respuesta_principal = f"""
-**🩺 Análisis Preliminar:**
-* **Especialidad Sugerida:** {result['especialidad_sugerida']}
-* **Nivel de Urgencia:** {result['nivel_urgencia']}
+                        **🩺 Análisis Preliminar:**
+                        * **Especialidad Sugerida:** {result['especialidad_sugerida']}
+                        * **Nivel de Urgencia:** {result['nivel_urgencia']}
 
-⚠️ **Aviso legal:** {result['instrucciones']}
+                        ⚠️ **Aviso legal:** {result['instrucciones']}
 """
                     st.markdown(respuesta_principal)
 
-                    # 2. Preparamos el contexto RAG (Limpiando los saltos de línea del PDF)
+                    # Dibujo de Gráficos de Confianza
+                    if "confianza_modelo" in result:
+                        st.caption("**Probabilidad por Especialidad Médica:**")
+                        for especialidad, probabilidad in result[
+                            "confianza_modelo"
+                        ].items():
+                            col1, col2 = st.columns([1, 3])
+                            with col1:
+                                st.write(f"*{especialidad}*")
+                            with col2:
+                                # Creamos una barra de progreso nativa de Streamlit
+                                st.progress(
+                                    probabilidad, text=f"{int(probabilidad * 100)}%"
+                                )
+                        st.write("---")
+
+                    # Preparamos el contexto RAG
                     contexto_crudo = result.get("contexto_recuperado", "")
                     contexto_limpio = ""
 
@@ -68,7 +95,7 @@ if prompt := st.chat_input(
                         and contexto_crudo
                         != "No se encontró contexto clínico en las guías."
                     ):
-                        # Truco para PDFs: Guardamos los párrafos reales (\n\n), limpiamos las líneas rotas (\n) y restauramos.
+                        # Limpieza en la devolución del RAG para que no se rompan los párrafos y el texto quede bien formado.
                         texto_temp = contexto_crudo.replace("\n\n", "@@MARCADOR@@")
                         texto_temp = texto_temp.replace("\n", " ")
                         contexto_limpio = texto_temp.replace("@@MARCADOR@@", "\n\n")
@@ -76,12 +103,13 @@ if prompt := st.chat_input(
                         with st.expander("📚 Ver fuentes clínicas (Sistema RAG)"):
                             st.info(contexto_limpio)
 
-                    # 3. Guardamos en el historial tanto la respuesta como el contexto limpio
+                    # Guardamos en el historial tanto la respuesta como el contexto limpio
                     st.session_state.messages.append(
                         {
                             "role": "assistant",
                             "content": respuesta_principal,
                             "rag_context": contexto_limpio,  # Se guarda para poder pintarlo al recargar
+                            "confianza": result.get("confianza_modelo"),
                         }
                     )
 
