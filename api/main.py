@@ -4,6 +4,116 @@ from pydantic import BaseModel
 import uvicorn
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
+import random  # Añade este import arriba del todo
+
+# Diccionario Clínico de referencia para el triaje (enfermedad en inglés -> especialista, urgencia, nombre en español)
+MAPEO_CLINICO = {
+    "Acne": {"especialista": "Dermatólogo", "urgencia": "Rutinario", "es": "Acné"},
+    "Arthritis": {
+        "especialista": "Reumatólogo",
+        "urgencia": "Prioritario",
+        "es": "Artritis",
+    },
+    "Bronchial Asthma": {
+        "especialista": "Neumólogo / Alergólogo",
+        "urgencia": "Urgente",
+        "es": "Asma Bronquial",
+    },
+    "Cervical spondylosis": {
+        "especialista": "Traumatólogo / Fisioterapeuta",
+        "urgencia": "Rutinario",
+        "es": "Espondilosis Cervical",
+    },
+    "Chicken pox": {
+        "especialista": "Pediatra / Infectólogo",
+        "urgencia": "Prioritario",
+        "es": "Varicela",
+    },
+    "Common Cold": {
+        "especialista": "Médico de Cabecera",
+        "urgencia": "Rutinario",
+        "es": "Resfriado Común",
+    },
+    "Dengue": {"especialista": "Infectólogo", "urgencia": "Urgente", "es": "Dengue"},
+    "Dimorphic Hemorrhoids": {
+        "especialista": "Proctólogo / Digestivo",
+        "urgencia": "Rutinario",
+        "es": "Hemorroides",
+    },
+    "Fungal infection": {
+        "especialista": "Dermatólogo",
+        "urgencia": "Rutinario",
+        "es": "Infección por Hongos",
+    },
+    "Hypertension": {
+        "especialista": "Cardiólogo",
+        "urgencia": "Prioritario",
+        "es": "Hipertensión",
+    },
+    "Impetigo": {
+        "especialista": "Dermatólogo",
+        "urgencia": "Rutinario",
+        "es": "Impétigo",
+    },
+    "Jaundice": {
+        "especialista": "Hepatólogo / Digestivo",
+        "urgencia": "Urgente",
+        "es": "Ictericia",
+    },
+    "Malaria": {"especialista": "Infectólogo", "urgencia": "Urgente", "es": "Malaria"},
+    "Migraine": {"especialista": "Neurólogo", "urgencia": "Rutinario", "es": "Migraña"},
+    "Pneumonia": {"especialista": "Neumólogo", "urgencia": "Urgente", "es": "Neumonía"},
+    "Psoriasis": {
+        "especialista": "Dermatólogo",
+        "urgencia": "Rutinario",
+        "es": "Psoriasis",
+    },
+    "Typhoid": {"especialista": "Infectólogo", "urgencia": "Urgente", "es": "Tifoidea"},
+    "Varicose Veins": {
+        "especialista": "Angiólogo / Cirujano Vascular",
+        "urgencia": "Rutinario",
+        "es": "Varices",
+    },
+    "allergy": {"especialista": "Alergólogo", "urgencia": "Rutinario", "es": "Alergia"},
+    "diabetes": {
+        "especialista": "Endocrinólogo",
+        "urgencia": "Prioritario",
+        "es": "Diabetes",
+    },
+    "drug reaction": {
+        "especialista": "Alergólogo / Urgencias",
+        "urgencia": "Urgente",
+        "es": "Reacción Alérgica a Medicamento",
+    },
+    "gastroesophageal reflux disease": {
+        "especialista": "Digestivo",
+        "urgencia": "Rutinario",
+        "es": "Reflujo Gastroesofágico",
+    },
+    "peptic ulcer disease": {
+        "especialista": "Digestivo",
+        "urgencia": "Prioritario",
+        "es": "Úlcera Péptica",
+    },
+    "urinary tract infection": {
+        "especialista": "Urólogo / Médico de Cabecera",
+        "urgencia": "Prioritario",
+        "es": "Infección de Orina",
+    },
+}
+
+
+def obtener_triaje(enfermedad_en):
+    info = MAPEO_CLINICO.get(
+        enfermedad_en,
+        {
+            "especialista": "Médico de Cabecera",
+            "urgencia": "Rutinario",
+            "es": enfermedad_en,
+        },
+    )
+    return info
+
 
 # Inicializamos la aplicación FastAPI
 app = FastAPI(
@@ -56,19 +166,26 @@ async def predict_triage(request: SymptomRequest):
     else:
         contexto_medico = "No se encontró contexto clínico en las guías."
 
-    # mod - Lógica de respuesta temporal (Mock) para validar la conexión con el frontend
+    # --- SIMULACIÓN TRANSITORIA (Hasta la Fase 2) ---
+    # Como aún no hemos enchufado la red neuronal de Jesús, simulamos que
+    # la IA ha detectado una enfermedad para probar que el Mapeo funciona bien.
+    enfermedad_simulada_en = random.choice(list(MAPEO_CLINICO.keys()))
+
+    # --- APLICAMOS LA LÓGICA DE JESÚS ---
+    detalles_triaje = obtener_triaje(enfermedad_simulada_en)
+
+    # --- RESPUESTA DINÁMICA ---
     return {
-        "especialidad_sugerida": "Medicina General (MVP)",
-        "nivel_urgencia": "Pendiente de evaluación técnica",
+        "especialidad_sugerida": detalles_triaje["especialista"],
+        "nivel_urgencia": detalles_triaje["urgencia"],
         "mensaje": f"Recibido análisis de: '{user_input}'",
         "contexto_recuperado": contexto_medico,
-        "instrucciones": "Consulte con un profesional sanitario si los síntomas persisten.",
-        # mod Simulación de los porcentajes de confianza del modelo a falta de la implementación de jesús
+        "instrucciones": f"Recomendación del sistema: Consulte con un {detalles_triaje['especialista']} lo antes posible.",
         "confianza_modelo": {
-            "Medicina General": 0.75,
-            "Cardiología": 0.15,
-            "Ansiedad": 0.10
-        }
+            detalles_triaje["especialista"]: 0.85,
+            "Medicina General": 0.10,
+            "Urgencias": 0.05,
+        },
     }
 
 
