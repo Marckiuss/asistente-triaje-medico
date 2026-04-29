@@ -9,7 +9,7 @@ st.caption(
     "Esta herramienta utiliza Inteligencia Artificial para sugerir la especialidad médica y el nivel de urgencia basándose en tus síntomas. **Nota: Prototipo académico.**"
 )
 
-# --- Inicializar el historial de chat ---
+# --- Inicializamos el historial de chat ---
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {
@@ -18,7 +18,7 @@ if "messages" not in st.session_state:
         }
     ]
 
-# --- Mostrar historial de mensajes ---
+# --- Mostramos historial de mensajes ---
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -60,13 +60,13 @@ if prompt := st.chat_input(
                 if response.status_code == 200:
                     result = response.json()
 
-                    # 1. Preparamos el texto principal (Limpio y directo)
+                    # Preparamos el texto inicial
                     respuesta_principal = f"""
-                        **🩺 Análisis Preliminar:**
+                        **Análisis Preliminar:**
                         * **Especialidad Sugerida:** {result['especialidad_sugerida']}
                         * **Nivel de Urgencia:** {result['nivel_urgencia']}
 
-                        ⚠️ **Aviso legal:** {result['instrucciones']}
+                        **Aviso legal:** {result['instrucciones']}
 """
                     st.markdown(respuesta_principal)
 
@@ -100,7 +100,7 @@ if prompt := st.chat_input(
                         texto_temp = texto_temp.replace("\n", " ")
                         contexto_limpio = texto_temp.replace("@@MARCADOR@@", "\n\n")
 
-                        with st.expander("📚 Ver fuentes clínicas (Sistema RAG)"):
+                        with st.expander("Ver fuentes clínicas (Sistema RAG)"):
                             st.info(contexto_limpio)
 
                     # Guardamos en el historial tanto la respuesta como el contexto limpio

@@ -4,7 +4,7 @@ from pydantic import BaseModel
 import uvicorn
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
-import random  # Añade este import arriba del todo
+import random
 
 # Diccionario Clínico de referencia para el triaje (enfermedad en inglés -> especialista, urgencia, nombre en español)
 MAPEO_CLINICO = {
@@ -128,7 +128,7 @@ class SymptomRequest(BaseModel):
     symptoms: str
 
 
-# Bloque completo de Configuración RAG y conexión a ChromaDB
+# Configuración RAG y conexión a ChromaDB
 directorio_actual = os.path.dirname(os.path.abspath(__file__))
 directorio_raiz = os.path.dirname(directorio_actual)
 CHROMA_PATH = os.path.join(directorio_raiz, "data", "vector_db")
@@ -154,7 +154,7 @@ async def predict_triage(request: SymptomRequest):
     Endpoint principal para recibir síntomas y devolver un triaje. [cite: 236]
     En esta fase de MVP, devolvemos una respuesta simulada (Mock).
     """
-    # mod - Aquí va el modelo .keras de Jesús
+    # mod - Jesús Fase 2 - aquí va el modelo .keras de Jesús
     user_input = request.symptoms.lower()
 
     resultados = vector_db.similarity_search(user_input, k=3)
@@ -166,15 +166,15 @@ async def predict_triage(request: SymptomRequest):
     else:
         contexto_medico = "No se encontró contexto clínico en las guías."
 
-    # --- SIMULACIÓN TRANSITORIA (Hasta la Fase 2) ---
-    # Como aún no hemos enchufado la red neuronal de Jesús, simulamos que
-    # la IA ha detectado una enfermedad para probar que el Mapeo funciona bien.
+    # mod - Jesús Fase 2 - aquí va el resultado del .keras para detectar la enfermedad
+    # Como aún no tenemos la red neuronal de Jesús, simulamos que
+    # hemos detectado una enfermedad para probar el mapeo
     enfermedad_simulada_en = random.choice(list(MAPEO_CLINICO.keys()))
 
-    # --- APLICAMOS LA LÓGICA DE JESÚS ---
+    # Obtenemos el triaje basado en la enfermedad simulada
     detalles_triaje = obtener_triaje(enfermedad_simulada_en)
 
-    # --- RESPUESTA DINÁMICA ---
+    # Respuesta simulada con detalles del triaje y contexto médico recuperado
     return {
         "especialidad_sugerida": detalles_triaje["especialista"],
         "nivel_urgencia": detalles_triaje["urgencia"],
