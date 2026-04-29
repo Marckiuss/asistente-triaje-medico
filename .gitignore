@@ -30,7 +30,7 @@ include/
 share/
 
 # --- Modelos y Datos (Pesados) ---
-# Ignoramos modelos de Keras y pesos pesados [cite: 228]
+# Ignoramos modelos de Keras y pesos pesados
 *.keras
 *.h5
 *.model
@@ -38,7 +38,7 @@ share/
 *.pkl
 api/models/*
 
-# Ignoramos datasets y base de datos vectorial [cite: 232]
+# Ignoramos datasets y base de datos vectorial
 data/raw/*
 data/processed/*
 data/vector_db/*
