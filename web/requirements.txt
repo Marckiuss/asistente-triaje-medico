@@ -1,2 +1,13 @@
 requests==2.33.1
 streamlit==1.56.0
+fastapi
+uvicorn
+pydantic
+tensorflow==2.15.0
+tensorflow-text==2.15.0
+keras-hub
+deep-translator
+numpy
+langchain-huggingface
+langchain-chroma
+sentence-transformers

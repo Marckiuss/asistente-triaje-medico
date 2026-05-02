@@ -1,24 +1,23 @@
 version: '3.8'
 
 services:
-  # Servicio de Backend (FastAPI)
   api:
     build:
-      context: ./api
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: triaje_api
     ports:
       - "8000:8000"
     volumes:
-      - ./api:/app
-    environment:
-      - ENV=dev
+      - ./models:/app/models # Mapeamos la carpeta models por si actualizáis pesos
+      - ./data:/app/data     # Mapeamos ChromaDB
 
-  # Servicio de Frontend (Streamlit)
   web:
     build:
-      context: ./web
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: triaje_web
     ports:
       - "8501:8501"
-    volumes:
-      - ./web:/app
     depends_on:
-      - api # Se asegura que la API levante antes que la web
+      - api
