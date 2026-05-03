@@ -1,0 +1,4 @@
+[core]
+    remote = mi_drive
+['remote "mi_drive"']
+    url = C:\Users\thediggindummy\OneDrive - Educacyl\triaje_dvc_storage
