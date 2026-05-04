@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import uvicorn
 from src.rag import MedicalRAG
@@ -11,48 +11,58 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Arrancamos los motores
 print("Inicializando componentes del sistema...")
 rag_engine = MedicalRAG()
 predictor_engine = ClinicalPredictor()
 
+
 class SymptomRequest(BaseModel):
     symptoms: str
+
 
 @app.get("/")
 def home():
     return {"status": "online", "message": "Servidor de Triaje Médico activo"}
 
+
 @app.post("/predict")
 async def predict_triage(request: SymptomRequest):
-    user_input = request.symptoms.lower()
+    try:
+        user_input = request.symptoms.lower()
 
-    # 1. Recuperamos contexto médico estructurado (Lista de fuentes)
-    # Ahora esto es una lista: [{"texto": "...", "fuente": "...", "pagina": "..."}, ...]
-    fuentes_recuperadas = rag_engine.retrieve_context(user_input)
+        # Recuperamos contexto médico estructurado (Lista de fuentes) en una lista de diccionarios con 'texto' y 'fuente'
+        fuentes_recuperadas = rag_engine.retrieve_context(user_input)
 
-    # 2. Preparamos el texto plano para el predictor (si el modelo lo requiere como string)
-    # Unimos solo los contenidos de texto para el análisis del modelo
-    contexto_texto_plano = "\n\n".join([f['texto'] for f in fuentes_recuperadas]) if fuentes_recuperadas else ""
+        # Predicción de IA y Triaje
+        detalles_triaje, top_3_probabilidades = predictor_engine.predict(user_input)
 
-    # 3. Predicción de IA y Triaje
-    # Nota: Asegúrate de si tu predictor necesita el contexto_texto_plano como argumento
-    detalles_triaje, confianza_real = predictor_engine.predict(user_input)
+        # Traducción y preparación de variables
+        lista_especialistas = detalles_triaje.get("especialistas", ["Indeterminado"])
+        texto_especialistas = " / ".join(lista_especialistas)
 
-    # 4. Respuesta final unificada
-    return {
-        "especialidad_sugerida": detalles_triaje["especialista"],
-        "nivel_urgencia": detalles_triaje["urgencia"],
-        "mensaje": f"Análisis completado para: '{user_input}'",
-        # Enviamos la lista completa de fuentes para que Marc la use en el frontend
-        "fuentes": fuentes_recuperadas, 
-        "instrucciones": f"Recomendación del sistema: Consulte con un {detalles_triaje['especialista']} lo antes posible.",
-        "confianza_modelo": {
-            detalles_triaje["especialista"]: confianza_real,
-            "Otros (Ruido)": 1 - confianza_real,
-        },
-    }
+        # Creamos un mensaje seguro si el modelo no sabe qué hacer
+        if "Indeterminado" in lista_especialistas:
+            instrucciones_finales = "Atención: El sistema no ha podido determinar una especialidad clara con los síntomas proporcionados. Acuda a un centro médico para una valoración humana."
+        else:
+            instrucciones_finales = f"Recomendación del sistema: Consulte con {texto_especialistas} lo antes posible."
+
+        # Respuesta final unificada
+        return {
+            "especialidad_sugerida": texto_especialistas,
+            "nivel_urgencia": detalles_triaje["urgencia"],
+            "mensaje": f"Análisis completado para: '{user_input}'",
+            "fuentes": fuentes_recuperadas,
+            "instrucciones": instrucciones_finales,
+            "confianza_modelo": top_3_probabilidades,
+        }
+
+    except Exception as e:
+        print(f"Error crítico en el servidor: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Error interno del servidor: {str(e)}"
+        )
+
 
 if __name__ == "__main__":
-    # Importante: En Docker usamos 0.0.0.0, pero aquí mantenemos tu config local
+    # Levantamos el servidor en 0.0.0.0 para que sea accesible desde la red de Docker
     uvicorn.run("api.main:app", host="0.0.0.0", port=8000, reload=True)

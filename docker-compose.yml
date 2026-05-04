@@ -1,23 +1,22 @@
-version: '3.8'
-
 services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile.api
+      dockerfile: api/Dockerfile
     container_name: triaje_api
     ports:
       - "8000:8000"
     volumes:
-      - ./models:/app/models # Mapeamos la carpeta models por si actualizáis pesos
-      - ./data:/app/data     # Mapeamos ChromaDB
+      - ./models:/app/models
+      - ./data:/app/data
 
   web:
     build:
       context: .
-      dockerfile: Dockerfile.web
+      dockerfile: web/Dockerfile
     container_name: triaje_web
     ports:
       - "8501:8501"
     depends_on:
-      - api
+      api:
+        condition: service_started

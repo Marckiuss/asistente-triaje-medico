@@ -1,18 +1,15 @@
-# Usamos una imagen ligera de Python
 FROM python:3.11-slim
 
-# Directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Copiamos solo los requisitos primero para aprovechar la caché de Docker
-COPY ../requirements.txt .
+COPY api/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiamos el código de la API
+# Instalación forzada de dependencias críticas para evitar problemas de compatibilidad
+RUN pip install --no-cache-dir tensorflow==2.16.1 keras==3.14.0 keras-nlp==0.28.0 keras-hub==0.28.0
+
 COPY . .
 
-# Exponemos el puerto de FastAPI
 EXPOSE 8000
 
-# Comando para arrancar la API
-CMD ["python", "main.py"]
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

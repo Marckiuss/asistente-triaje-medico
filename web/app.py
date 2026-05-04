@@ -24,16 +24,28 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
         if message.get("confianza"):
-            st.caption("**Confianza de la predicción:**")
-            for esp, prob in message["confianza"].items():
-                col1, col2 = st.columns([1, 3])
-                with col1:
-                    st.write(f"*{esp}*")
-                with col2:
-                    st.progress(prob, text=f"{int(prob * 100)}%")
+            st.caption("**Top 3 Especialidades Sugeridas:**")
+
+            # Convertimos las claves y valores a listas para poder asignar posiciones
+            esps = list(message["confianza"].keys())
+            probs = list(message["confianza"].values())
+
+            # Creamos las 3 columnas para mostrar las especialidades y sus probabilidades
+            cols = st.columns(3)
+            medallas = ["🥇", "🥈", "🥉"]
+
+            for i, col in enumerate(cols):
+                with col:
+                    if i < len(esps):
+                        medalla = medallas[i] if i < 3 else ""
+                        st.metric(
+                            label=f"{medalla} {esps[i]}",
+                            value=f"{probs[i]*100:.1f}%",
+                        )
+                        st.progress(probs[i])
             st.write("---")
 
-        # MODIFICADO: Ahora recorremos la lista de fuentes en el historial
+        # Recorremos la lista de fuentes en el historial
         if message.get("fuentes"):
             with st.expander("📚 Ver referencias médicas consultadas"):
                 for doc in message["fuentes"]:
@@ -72,22 +84,28 @@ if prompt := st.chat_input("Describe tus síntomas aquí..."):
                     """
                     st.markdown(respuesta_principal)
 
-                    # Gráficos de Confianza
+                    # Gráficos de Confianza (Top-3)
                     if "confianza_modelo" in result:
-                        st.caption("**Probabilidad por Especialidad Médica:**")
-                        for especialidad, probabilidad in result[
-                            "confianza_modelo"
-                        ].items():
-                            col1, col2 = st.columns([1, 3])
-                            with col1:
-                                st.write(f"*{especialidad}*")
-                            with col2:
-                                st.progress(
-                                    probabilidad, text=f"{int(probabilidad * 100)}%"
-                                )
+                        st.caption("**Top 3 Especialidades Sugeridas:**")
+
+                        esps = list(result["confianza_modelo"].keys())
+                        probs = list(result["confianza_modelo"].values())
+
+                        cols = st.columns(3)
+                        medallas = ["🥇", "🥈", "🥉"]
+
+                        for i, col in enumerate(cols):
+                            with col:
+                                if i < len(esps):
+                                    medalla = medallas[i] if i < 3 else ""
+                                    st.metric(
+                                        label=f"{medalla} {esps[i]}",
+                                        value=f"{probs[i]*100:.1f}%",
+                                    )
+                                    st.progress(probs[i])
                         st.write("---")
 
-                    # MODIFICADO: Procesamos la nueva lista de fuentes
+                    # Procesamos la nueva lista de fuentes
                     fuentes_api = result.get("fuentes", [])
                     if fuentes_api:
                         with st.expander("📚 Ver referencias médicas consultadas"):

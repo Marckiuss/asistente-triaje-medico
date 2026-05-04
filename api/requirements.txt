@@ -7,3 +7,6 @@ pydantic==2.13.3
 uvicorn==0.46.0
 sentence-transformers==5.4.1
 chromadb==1.5.8
+deep-translator
+pandas
+scikit-learn==1.6.1

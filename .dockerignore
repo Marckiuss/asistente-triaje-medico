@@ -1,0 +1,24 @@
+# 1. Bloqueo por extensión (para cazar las DLL y modelos que vimos en tu lista)
+*.keras
+*.dll
+*.pyd
+*.lib
+*.so
+*.exe
+
+# 2. Bloqueo de carpetas con comodines recursivos
+**/venv/
+**/.venv/
+**/env/
+**/__pycache__/
+**/.git/
+**/.dvc/
+
+# 3. Bloqueo de datos y modelos (ya que usas volúmenes en el compose)
+models/
+data/
+**/models/
+**/data/
+
+# 4. Archivo de caché de DVC específico que salió en tu lista
+7e25422a442047f9a74015c496f86a

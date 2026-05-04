@@ -2,92 +2,232 @@ import tensorflow as tf
 import numpy as np
 import pickle
 from deep_translator import GoogleTranslator
-import keras_hub
 import os
+import keras
+import keras_nlp
+
 
 class ClinicalPredictor:
-    # Diccionario para traducir enfermedades y obtener especialista y urgencia
+    # Diccionario REFACTORIZADO: Ahora usa el estándar de listas para soportar múltiples especialistas nativamente
     MAPEO_CLINICO = {
-        "Acne": {"especialista": "Dermatólogo", "urgencia": "Rutinario", "es": "Acné"},
-        "Arthritis": {"especialista": "Reumatólogo", "urgencia": "Prioritario", "es": "Artritis"},
-        "Bronchial Asthma": {"especialista": "Neumólogo / Alergólogo", "urgencia": "Urgente", "es": "Asma Bronquial"},
-        "Cervical spondylosis": {"especialista": "Traumatólogo / Fisioterapeuta", "urgencia": "Rutinario", "es": "Espondilosis Cervical"},
-        "Chicken pox": {"especialista": "Pediatra / Infectólogo", "urgencia": "Prioritario", "es": "Varicela"},
-        "Common Cold": {"especialista": "Médico de Cabecera", "urgencia": "Rutinario", "es": "Resfriado Común"},
-        "Dengue": {"especialista": "Infectólogo", "urgencia": "Urgente", "es": "Dengue"},
-        "Dimorphic Hemorrhoids": {"especialista": "Proctólogo / Digestivo", "urgencia": "Rutinario", "es": "Hemorroides"},
-        "Fungal infection": {"especialista": "Dermatólogo", "urgencia": "Rutinario", "es": "Infección por Hongos"},
-        "Hypertension": {"especialista": "Cardiólogo", "urgencia": "Prioritario", "es": "Hipertensión"},
-        "Impetigo": {"especialista": "Dermatólogo", "urgencia": "Rutinario", "es": "Impétigo"},
-        "Jaundice": {"especialista": "Hepatólogo / Digestivo", "urgencia": "Urgente", "es": "Ictericia"},
-        "Malaria": {"especialista": "Infectólogo", "urgencia": "Urgente", "es": "Malaria"},
-        "Migraine": {"especialista": "Neurólogo", "urgencia": "Rutinario", "es": "Migraña"},
-        "Pneumonia": {"especialista": "Neumólogo", "urgencia": "Urgente", "es": "Neumonía"},
-        "Psoriasis": {"especialista": "Dermatólogo", "urgencia": "Rutinario", "es": "Psoriasis"},
-        "Typhoid": {"especialista": "Infectólogo", "urgencia": "Urgente", "es": "Tifoidea"},
-        "Varicose Veins": {"especialista": "Angiólogo / Cirujano Vascular", "urgencia": "Rutinario", "es": "Varices"},
-        "allergy": {"especialista": "Alergólogo", "urgencia": "Rutinario", "es": "Alergia"},
-        "diabetes": {"especialista": "Endocrinólogo", "urgencia": "Prioritario", "es": "Diabetes"},
-        "drug reaction": {"especialista": "Alergólogo / Urgencias", "urgencia": "Urgente", "es": "Reacción Alérgica a Medicamento"},
-        "gastroesophageal reflux disease": {"especialista": "Digestivo", "urgencia": "Rutinario", "es": "Reflujo Gastroesofágico"},
-        "peptic ulcer disease": {"especialista": "Digestivo", "urgencia": "Prioritario", "es": "Úlcera Péptica"},
-        "urinary tract infection": {"especialista": "Urólogo / Médico de Cabecera", "urgencia": "Prioritario", "es": "Infección de Orina"},
+        "Acne": {
+            "especialistas": ["Dermatólogo"],
+            "urgencia": "Rutinario",
+            "es": "Acné",
+        },
+        "Arthritis": {
+            "especialistas": ["Reumatólogo"],
+            "urgencia": "Prioritario",
+            "es": "Artritis",
+        },
+        "Bronchial Asthma": {
+            "especialistas": ["Neumólogo", "Alergólogo"],
+            "urgencia": "Urgente",
+            "es": "Asma Bronquial",
+        },
+        "Cervical spondylosis": {
+            "especialistas": ["Traumatólogo", "Fisioterapeuta"],
+            "urgencia": "Rutinario",
+            "es": "Espondilosis Cervical",
+        },
+        "Chicken pox": {
+            "especialistas": ["Pediatra", "Infectólogo"],
+            "urgencia": "Prioritario",
+            "es": "Varicela",
+        },
+        "Common Cold": {
+            "especialistas": ["Médico de Cabecera"],
+            "urgencia": "Rutinario",
+            "es": "Resfriado Común",
+        },
+        "Dengue": {
+            "especialistas": ["Infectólogo"],
+            "urgencia": "Urgente",
+            "es": "Dengue",
+        },
+        "Dimorphic Hemorrhoids": {
+            "especialistas": ["Proctólogo", "Digestivo"],
+            "urgencia": "Rutinario",
+            "es": "Hemorroides",
+        },
+        "Fungal infection": {
+            "especialistas": ["Dermatólogo"],
+            "urgencia": "Rutinario",
+            "es": "Infección por Hongos",
+        },
+        "Hypertension": {
+            "especialistas": ["Cardiólogo"],
+            "urgencia": "Prioritario",
+            "es": "Hipertensión",
+        },
+        "Impetigo": {
+            "especialistas": ["Dermatólogo"],
+            "urgencia": "Rutinario",
+            "es": "Impétigo",
+        },
+        "Jaundice": {
+            "especialistas": ["Hepatólogo", "Digestivo"],
+            "urgencia": "Urgente",
+            "es": "Ictericia",
+        },
+        "Malaria": {
+            "especialistas": ["Infectólogo"],
+            "urgencia": "Urgente",
+            "es": "Malaria",
+        },
+        "Migraine": {
+            "especialistas": ["Neurólogo"],
+            "urgencia": "Rutinario",
+            "es": "Migraña",
+        },
+        "Pneumonia": {
+            "especialistas": ["Neumólogo"],
+            "urgencia": "Urgente",
+            "es": "Neumonía",
+        },
+        "Psoriasis": {
+            "especialistas": ["Dermatólogo"],
+            "urgencia": "Rutinario",
+            "es": "Psoriasis",
+        },
+        "Typhoid": {
+            "especialistas": ["Infectólogo"],
+            "urgencia": "Urgente",
+            "es": "Tifoidea",
+        },
+        "Varicose Veins": {
+            "especialistas": ["Angiólogo", "Cirujano Vascular"],
+            "urgencia": "Rutinario",
+            "es": "Varices",
+        },
+        "allergy": {
+            "especialistas": ["Alergólogo"],
+            "urgencia": "Rutinario",
+            "es": "Alergia",
+        },
+        "diabetes": {
+            "especialistas": ["Endocrinólogo"],
+            "urgencia": "Prioritario",
+            "es": "Diabetes",
+        },
+        "drug reaction": {
+            "especialistas": ["Alergólogo", "Urgencias"],
+            "urgencia": "Urgente",
+            "es": "Reacción Alérgica a Medicamento",
+        },
+        "gastroesophageal reflux disease": {
+            "especialistas": ["Digestivo"],
+            "urgencia": "Rutinario",
+            "es": "Reflujo Gastroesofágico",
+        },
+        "peptic ulcer disease": {
+            "especialistas": ["Digestivo"],
+            "urgencia": "Prioritario",
+            "es": "Úlcera Péptica",
+        },
+        "urinary tract infection": {
+            "especialistas": ["Urólogo", "Médico de Cabecera"],
+            "urgencia": "Prioritario",
+            "es": "Infección de Orina",
+        },
     }
 
-    def __init__(self, model_path: str = "asistente_triaje_medico.keras", encoder_path: str = "label_encoder.pkl"):
+    def __init__(
+        self,
+        model_path: str = "asistente_triaje_medico.keras",
+        encoder_path: str = "label_encoder.pkl",
+    ):
         self.translator = GoogleTranslator(source="es", target="en")
 
-        # 1. Calculamos la raíz del proyecto (subiendo un nivel desde src/)
+        # Calculamos la carpeta raíz del proyecto (subiendo un nivel desde src/)
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        
-        # 2. Forzamos la búsqueda DENTRO de la carpeta models
-        ruta_modelo = os.path.join(base_dir, "models", "asistente_triaje_medico.keras")
-        ruta_encoder = os.path.join(base_dir, "models", "label_encoder.pkl")
 
+        # Forzamos la búsqueda en la carpeta models
+        ruta_modelo = os.path.join(base_dir, "models", model_path)
+        ruta_encoder = os.path.join(base_dir, "models", encoder_path)
+
+        # Cargamos el modelo y el encoder
         try:
-            self.model = tf.keras.models.load_model(ruta_modelo)
+            # CAMBIO CLAVE: Usamos 'keras.models' en lugar de 'tf.keras.models'
+            self.model = keras.models.load_model(ruta_modelo)
             with open(ruta_encoder, "rb") as f:
                 self.label_encoder = pickle.load(f)
-            print("Motor Keras cargado correctamente")
+            print("Motor BERT de KerasNLP cargado correctamente")
             self.is_loaded = True
         except Exception as e:
             print(f"Error cargando modelo: {e}")
             self.is_loaded = False
 
+    # Obtiene los detalles de triaje a partir del nombre de la enfermedad en inglés
     def obtener_triaje(self, enfermedad_en: str) -> dict:
         return self.MAPEO_CLINICO.get(
             enfermedad_en,
-            {"especialista": "Médico de Cabecera", "urgencia": "Rutinario", "es": enfermedad_en}
+            {
+                "especialistas": ["Indeterminado"],
+                "urgencia": "Indeterminada",
+                "es": "Desconocida",
+            },
         )
 
+    # Recibe los síntomas en texto libre y devuelve un diccionario con la especialidad médica sugerida y el nivel de urgencia
     def predict(self, user_input: str):
+        # AHORA devuelve un diccionario vacío {} en lugar de 0.0 en caso de error
         if not self.is_loaded:
             return {
-                "especialista": "SISTEMA NO DISPONIBLE (Fallo de IA)", 
-                "urgencia": "INDETERMINADA"
-            }, 0.0
+                "especialistas": ["SISTEMA NO DISPONIBLE (Fallo de IA)"],
+                "urgencia": "INDETERMINADA",
+            }, {}
+
         try:
-            # 1. Traducción a inglés
+            # Traducción a inglés
             texto_en = self.translator.translate(user_input)
-            
-            # 2. Predicción con el modelo de Keras
+
+            # Predicción con el modelo de Keras
             logits = self.model.predict([texto_en], verbose=0)
             probabilidades = tf.nn.softmax(logits, axis=1).numpy()[0]
-            
-            # 3. Extraer el ganador y su nivel de confianza
-            idx_ganador = np.argmax(probabilidades)
-            enfermedad_en = self.label_encoder.inverse_transform([idx_ganador])[0]
-            confianza_real = float(probabilidades[idx_ganador])
-            
-            # 4. Mapear al especialista y urgencia
-            detalles_triaje = self.obtener_triaje(enfermedad_en)
-            return detalles_triaje, confianza_real
-            
+
+            # Cálculo probabilidades iterando la lista de especialistas
+            probabilidades_por_especialidad = {}
+
+            for idx, prob in enumerate(probabilidades):
+                if prob > 0:  # Filtro rápido
+                    enfermedad_en = self.label_encoder.inverse_transform([idx])[0]
+                    info_clinica = self.obtener_triaje(enfermedad_en)
+
+                    # Iteramos limpiamente sobre la lista nativa de especialistas
+                    for esp in info_clinica["especialistas"]:
+                        if esp in probabilidades_por_especialidad:
+                            probabilidades_por_especialidad[esp] += float(prob)
+                        else:
+                            probabilidades_por_especialidad[esp] = float(prob)
+
+            # Extracción del TOP 3 de especialidades
+            especialidades_ordenadas = sorted(
+                probabilidades_por_especialidad.items(),
+                key=lambda item: item[1],
+                reverse=True,
+            )
+
+            top_3_dict = {}
+            for esp, prob in especialidades_ordenadas[:3]:
+                top_3_dict[esp] = min(prob, 1.0)
+
+            # Mapear los detalles para la API
+            idx_ganador_absoluto = np.argmax(probabilidades)
+            enfermedad_ganadora_en = self.label_encoder.inverse_transform(
+                [idx_ganador_absoluto]
+            )[0]
+            detalles_triaje = self.obtener_triaje(enfermedad_ganadora_en)
+
+            return detalles_triaje, top_3_dict
+
         except Exception as e:
-            # Capturamos cualquier fallo en tiempo de ejecución (ej. fallo de red del traductor)
-            print(f"[CRÍTICO] Fallo en el pipeline de inferencia: {e}")
-            print(f"[ERROR MLOPS] No se encontró el modelo. Detalle: {e}", flush=True)
+            print(f"[CRÍTICO] Fallo en el pipeline de inferencia BERT: {e}")
+            print(
+                f"[ERROR MLOPS] No se encontró el modelo o falló traducción. Detalle: {e}",
+                flush=True,
+            )
             return {
-                "especialista": "ERROR EN PROCESAMIENTO", 
-                "urgencia": "INDETERMINADA"
-            }, 0.0
+                "especialistas": ["ERROR EN PROCESAMIENTO"],
+                "urgencia": "INDETERMINADA",
+            }, {}
