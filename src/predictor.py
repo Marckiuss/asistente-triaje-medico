@@ -8,7 +8,7 @@ import keras_nlp
 
 
 class ClinicalPredictor:
-    # Diccionario REFACTORIZADO: Ahora usa el estándar de listas para soportar múltiples especialistas nativamente
+    # Diccionario clíniico. Soporta varios especialistas a la vez
     MAPEO_CLINICO = {
         "Acne": {
             "especialistas": ["Dermatólogo"],
@@ -139,7 +139,7 @@ class ClinicalPredictor:
     ):
         self.translator = GoogleTranslator(source="es", target="en")
 
-        # Calculamos la carpeta raíz del proyecto (subiendo un nivel desde src/)
+        # Calculamos la carpeta raíz del proyecto
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
         # Forzamos la búsqueda en la carpeta models
@@ -148,7 +148,6 @@ class ClinicalPredictor:
 
         # Cargamos el modelo y el encoder
         try:
-            # CAMBIO CLAVE: Usamos 'keras.models' en lugar de 'tf.keras.models'
             self.model = keras.models.load_model(ruta_modelo)
             with open(ruta_encoder, "rb") as f:
                 self.label_encoder = pickle.load(f)
@@ -171,7 +170,7 @@ class ClinicalPredictor:
 
     # Recibe los síntomas en texto libre y devuelve un diccionario con la especialidad médica sugerida y el nivel de urgencia
     def predict(self, user_input: str):
-        # AHORA devuelve un diccionario vacío {} en lugar de 0.0 en caso de error
+        # En caso de error devuelve un diccionario vacío {} en lugar de 0.0
         if not self.is_loaded:
             return {
                 "especialistas": ["SISTEMA NO DISPONIBLE (Fallo de IA)"],
@@ -190,7 +189,7 @@ class ClinicalPredictor:
             probabilidades_por_especialidad = {}
 
             for idx, prob in enumerate(probabilidades):
-                if prob > 0:  # Filtro rápido
+                if prob > 0:
                     enfermedad_en = self.label_encoder.inverse_transform([idx])[0]
                     info_clinica = self.obtener_triaje(enfermedad_en)
 

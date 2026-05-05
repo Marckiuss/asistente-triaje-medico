@@ -42,7 +42,7 @@ class MedicalRAG:
                     "fuente": nombre_archivo,
                     "pagina": doc.metadata.get(
                         "page", "N/A"
-                    ),  # Si usaste PyPDFLoader, trae la página
+                    ), 
                 }
             )
 

@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-# --- Configuración de la página ---
+# Configuración de la página
 st.set_page_config(page_title="Triaje IA", page_icon="🏥", layout="centered")
 
 st.title("🏥 Asistente Inteligente de Triaje")
@@ -9,7 +9,7 @@ st.caption(
     "Esta herramienta utiliza Inteligencia Artificial para sugerir la especialidad médica y el nivel de urgencia basándose en tus síntomas. **Nota: Prototipo académico.**"
 )
 
-# --- Inicializamos el historial de chat ---
+# Inicializamos el historial de chat
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {
@@ -18,7 +18,7 @@ if "messages" not in st.session_state:
         }
     ]
 
-# --- Mostramos historial de mensajes ---
+# Mostramos historial de mensajes
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -55,7 +55,7 @@ for message in st.session_state.messages:
                     st.info(doc["texto"])
                     st.divider()
 
-# --- Entrada de Usuario ---
+# Entrada del Usuario
 if prompt := st.chat_input("Describe tus síntomas aquí..."):
 
     with st.chat_message("user"):
@@ -105,7 +105,7 @@ if prompt := st.chat_input("Describe tus síntomas aquí..."):
                                     st.progress(probs[i])
                         st.write("---")
 
-                    # Procesamos la nueva lista de fuentes
+                    # Procesamos la lista de fuentes
                     fuentes_api = result.get("fuentes", [])
                     if fuentes_api:
                         with st.expander("📚 Ver referencias médicas consultadas"):
@@ -131,7 +131,7 @@ if prompt := st.chat_input("Describe tus síntomas aquí..."):
             except Exception as e:
                 st.error(f"Error de conexión: {e}")
 
-# --- Menú lateral ---
+# Menú lateral
 st.sidebar.title("Opciones")
 if st.sidebar.button("🗑️ Nueva Consulta"):
     st.session_state.messages = [{"role": "assistant", "content": "Hola..."}]
